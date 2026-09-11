@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cityscape Generator</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./node_modules/three/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div id="hud">
+    <h1>Cityscape Generator</h1>
+    <p id="status">Loading...</p>
+
+    <div class="controls-panel">
+      <label for="seed-input">Seed</label>
+      <input id="seed-input" type="text" value="42" spellcheck="false">
+      <button id="regenerate-btn" type="button">Regenerate</button>
+    </div>
+
+    <div class="checkbox-row">
+      <label for="wireframe-toggle">
+        <input id="wireframe-toggle" type="checkbox">
+        Wireframe
+      </label>
+    </div>
+
+    <div class="slider-panel">
+      <div class="slider-row">
+        <label for="grid-size-slider">Grid size <span id="grid-size-value">24</span></label>
+        <input id="grid-size-slider" type="range" min="8" max="64" value="24" step="1">
+      </div>
+      <div class="slider-row">
+        <label for="grass-slider">Grass <span id="grass-value">25%</span></label>
+        <input id="grass-slider" type="range" min="0" max="100" value="25" step="1">
+      </div>
+      <div class="slider-row">
+        <label for="sand-slider">Sand <span id="sand-value">25%</span></label>
+        <input id="sand-slider" type="range" min="0" max="100" value="25" step="1">
+      </div>
+      <div class="slider-row">
+        <label for="height-slider">Terrain height <span id="height-value">0.22</span></label>
+        <input id="height-slider" type="range" min="0" max="80" value="22" step="1">
+      </div>
+    </div>
+
+    <div class="help">
+      <p>Click the view to capture the mouse.</p>
+      <ul>
+        <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</li>
+        <li><kbd>E</kbd> / <kbd>C</kbd> Raise / lower camera</li>
+        <li>Mouse Look</li>
+      </ul>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
