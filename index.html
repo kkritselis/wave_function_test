@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cityscape Generator</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>City Environment Editor</title>
+  <link rel="stylesheet" href="css/editor.css">
   <script type="importmap">
   {
     "imports": {
@@ -14,54 +14,111 @@
   </script>
 </head>
 <body>
-  <div id="canvas-container"></div>
+  <div id="app">
+    <aside id="editor-panel">
+      <header class="panel-header">
+        <h1>Environment Editor</h1>
+        <p id="status">Loading tileset...</p>
+      </header>
 
-  <div id="hud">
-    <h1>Cityscape Generator</h1>
-    <p id="status">Loading...</p>
+      <section class="tool-section">
+        <h2>Tools</h2>
+        <div id="toolbar" class="toolbar" role="toolbar" aria-label="Editor tools">
+          <button type="button" class="tool-btn active" data-tool="paint" title="Paint (B)">
+            <span class="tool-icon">&#9632;</span>
+            Paint
+          </button>
+          <button type="button" class="tool-btn" data-tool="erase" title="Erase (E)">
+            <span class="tool-icon">&#10005;</span>
+            Erase
+          </button>
+          <button type="button" class="tool-btn" data-tool="pick" title="Eyedropper (I)">
+            <span class="tool-icon">P</span>
+            Pick
+          </button>
+          <button type="button" class="tool-btn" data-tool="fill" title="Fill (G)">
+            <span class="tool-icon">&#9638;</span>
+            Fill
+          </button>
+        </div>
+        <div class="tool-options">
+          <label class="checkbox-label">
+            <input id="show-grid" type="checkbox" checked>
+            Show grid
+          </label>
+          <span id="rotation-display" class="rotation-badge" title="Press R to rotate">Rot: 0</span>
+        </div>
+      </section>
 
-    <div class="controls-panel">
-      <label for="seed-input">Seed</label>
-      <input id="seed-input" type="text" value="42" spellcheck="false">
-      <button id="regenerate-btn" type="button">Regenerate</button>
-    </div>
+      <section class="palette-section">
+        <h2>Tiles</h2>
+        <input id="tile-search" type="search" placeholder="Search tiles..." spellcheck="false">
+        <div id="tile-palette" class="tile-palette"></div>
+        <div id="selected-tile-preview" class="selected-tile-preview">
+          <canvas id="selected-tile-canvas" width="64" height="64"></canvas>
+          <span id="selected-tile-name">roadTexture_25</span>
+        </div>
+      </section>
 
-    <div class="checkbox-row">
-      <label for="wireframe-toggle">
-        <input id="wireframe-toggle" type="checkbox">
-        Wireframe
-      </label>
-    </div>
+      <section class="grid-section">
+        <div id="grid-viewport" class="grid-viewport">
+          <canvas id="grid-canvas"></canvas>
+        </div>
+        <p class="grid-hint">Scroll to zoom. Middle-click or Space+drag to pan. Click cells to edit.</p>
+      </section>
 
-    <div class="slider-panel">
-      <div class="slider-row">
-        <label for="grid-size-slider">Grid size <span id="grid-size-value">24</span></label>
-        <input id="grid-size-slider" type="range" min="8" max="64" value="24" step="1">
+      <footer class="panel-footer">
+        <div class="grid-controls">
+          <label>
+            Width
+            <input id="grid-width" type="number" min="4" max="128" value="24">
+          </label>
+          <label>
+            Height
+            <input id="grid-height" type="number" min="4" max="128" value="24">
+          </label>
+          <button id="resize-grid-btn" type="button">Resize</button>
+          <button id="clear-grid-btn" type="button">Clear</button>
+        </div>
+        <div class="file-controls">
+          <button id="undo-btn" type="button" disabled>Undo</button>
+          <button id="redo-btn" type="button" disabled>Redo</button>
+          <button id="export-btn" type="button">Export JSON</button>
+          <label class="import-btn">
+            Import JSON
+            <input id="import-input" type="file" accept="application/json,.json" hidden>
+          </label>
+        </div>
+      </footer>
+    </aside>
+
+    <main id="viewport-panel">
+      <div id="viewport-header">
+        <div class="viewport-title-row">
+          <h2>3D Preview</h2>
+          <button id="reset-camera-btn" type="button">Reset camera</button>
+        </div>
+        <div class="viewport-controls">
+          <label class="viewport-control">
+            Terrain height
+            <input id="height-slider" type="range" min="0" max="80" value="22" step="1">
+            <span id="height-value">0.22</span>
+          </label>
+          <label class="checkbox-label">
+            <input id="wireframe-toggle" type="checkbox">
+            Wireframe
+          </label>
+          <label class="viewport-control">
+            Skybox
+            <select id="skybox-select"></select>
+          </label>
+        </div>
+        <p class="viewport-hint">Click the view to fly. <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move, <kbd>E</kbd>/<kbd>C</kbd> up/down, mouse look.</p>
       </div>
-      <div class="slider-row">
-        <label for="grass-slider">Grass <span id="grass-value">25%</span></label>
-        <input id="grass-slider" type="range" min="0" max="100" value="25" step="1">
-      </div>
-      <div class="slider-row">
-        <label for="sand-slider">Sand <span id="sand-value">25%</span></label>
-        <input id="sand-slider" type="range" min="0" max="100" value="25" step="1">
-      </div>
-      <div class="slider-row">
-        <label for="height-slider">Terrain height <span id="height-value">0.22</span></label>
-        <input id="height-slider" type="range" min="0" max="80" value="22" step="1">
-      </div>
-    </div>
-
-    <div class="help">
-      <p>Click the view to capture the mouse.</p>
-      <ul>
-        <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</li>
-        <li><kbd>E</kbd> / <kbd>C</kbd> Raise / lower camera</li>
-        <li>Mouse Look</li>
-      </ul>
-    </div>
+      <div id="canvas-container"></div>
+    </main>
   </div>
 
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/editor-main.js"></script>
 </body>
 </html>
