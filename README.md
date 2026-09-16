@@ -1,17 +1,17 @@
-# Cityscape Generator
+# City Environment Editor
 
-A browser-based procedural city generator built with Three.js. It lays out building blocks and an arterial road grid, autotiles road textures from a curated tileset, fills remaining cells with grass and sand, and renders the result on a low-poly terrain mesh with subtle height noise.
+A browser-based tool for designing city terrain layouts by hand, previewing them in Three.js, and exporting JSON for use in a game. Paint road and terrain tiles on a 2D grid and see the result rendered on a low-poly 3D mesh in real time.
+
+An earlier procedural generator (Wave Function Collapse / autotiled city layout) is still available at `index_old.html` for reference.
 
 ## Features
 
-- Seeded procedural generation (numeric or text seeds)
-- Arterial road grid with connected intersections (no orphan road islands)
-- Bitmask autotiling for straights, corners, T-junctions, and crossroads
-- Grass and sand fill with adjustable percentages
-- Low-poly terrain mesh with FBM height noise
-- Live terrain height slider (rebuilds geometry without regenerating layout)
-- Wireframe toggle for inspecting the mesh
-- Fly camera controls (WASD, mouse look, E/C for altitude)
+- **2D grid editor** — paint, erase, eyedropper, and flood-fill tools
+- **Tile palette** — all 96 road/terrain textures from `roads/`, with search and rotation
+- **Live 3D preview** — terrain mesh updates as you edit the grid
+- **Export / import** — save and load layouts as JSON for your game
+- **Viewport options** — terrain height, wireframe, skybox selection, fly camera
+- **Undo / redo** — full edit history with keyboard shortcuts
 
 ## Quick start
 
@@ -22,33 +22,74 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Controls
+## Editor controls
+
+### 2D grid (left panel)
 
 | Input | Action |
 | --- | --- |
-| Seed + Enter | Regenerate with a specific seed |
-| Regenerate | Generate a new random seed |
-| Grid size | Map width/height in tiles (8–64). Larger grids expand in world space. |
-| Grass / Sand | Percent of empty cells filled with each terrain type |
-| Terrain height | Height noise amplitude (0.00–0.80) |
-| Wireframe | Toggle mesh wireframe overlay |
-| Click canvas | Capture mouse for look controls |
+| Paint tool (B) | Place the selected tile |
+| Erase tool (E) | Reset a cell to grass |
+| Pick tool (I) | Copy tile from a cell |
+| Fill tool (G) | Flood fill matching tiles |
+| R | Rotate selected tile (0°, 90°, 180°, 270°) |
+| Right-click drag | Erase while dragging |
+| Scroll | Zoom the grid view |
+| Space + drag | Pan the grid view |
+| Ctrl+Z / Ctrl+Y | Undo / redo |
+| Ctrl+S | Export JSON |
+
+### 3D preview (right panel)
+
+| Input | Action |
+| --- | --- |
+| Click view | Capture mouse for look controls |
 | W A S D | Move |
 | E / C | Raise / lower camera |
 | Mouse | Look around |
+| Terrain height | Adjust height noise amplitude |
+| Wireframe | Toggle mesh wireframe |
+| Skybox | Switch background (day, morning, night, space, alien) |
+| Reset camera | Return to default view |
 
-## How generation works
+## Export format
 
-1. **Building footprints** — Random rectangles are placed in block interiors, avoiding arterial lines.
-2. **Arterial grid** — Roads are stamped on a regular spacing (`blockSize`, derived from grid size).
-3. **Network cleanup** — Disconnected components, interior spurs, and edge dead-ends are removed so all roads form one navigable network.
-4. **Autotiling** — Each road cell gets a texture based on its neighbor bitmask (N=1, E=2, S=4, W=8). Curated tile lists per mask avoid water and decorative false matches.
-5. **Terrain fill** — Remaining empty cells receive grass or sand based on the sliders. Building cells become grass.
-6. **Rendering** — Tile IDs are baked into a canvas texture, mapped onto a subdivided plane with seeded FBM height noise.
+Exported JSON includes terrain tile data and a placeholder `objects` array for future 3D props:
+
+```json
+{
+  "version": 1,
+  "meta": {
+    "gridWidth": 24,
+    "gridHeight": 24,
+    "defaultTile": "roadTexture_25",
+    "tilePixelSize": 128,
+    "exportedAt": "2026-09-11T..."
+  },
+  "terrain": [
+    [{ "id": "roadTexture_25", "rotation": 0 }]
+  ],
+  "objects": []
+}
+```
+
+Each terrain cell has an `id` (matching a PNG in `roads/`) and a `rotation` (0–3, quarter turns clockwise).
+
+## Assets
+
+| Folder | Contents |
+| --- | --- |
+| `roads/` | 96 terrain/road tile PNGs (128×128) |
+| `Skyboxes/` | Equirectangular skybox images for the 3D preview |
+| `City Kit - Commercial/` | Kenney commercial building OBJ models |
+| `City Kit - Industrial/` | Kenney industrial building OBJ models |
+| `City Kit - Suburban/` | Kenney suburban building OBJ models |
+
+3D object placement on the grid is planned; the `objects` array in exports is reserved for that.
 
 ## Tile analysis
 
-Road PNGs live in `roads/` (96 tiles at 128×128). The analyzer reads edge pixels, assigns socket IDs, and writes `road-tileset.json` for the app.
+Road PNGs in `roads/` are analyzed to produce socket metadata in `road-tileset.json`. Re-run after adding or editing tiles:
 
 ```bash
 npm run analyze-tiles
@@ -59,26 +100,33 @@ Key base tiles:
 | Tile | ID | Use |
 | --- | --- | --- |
 | Grass | `roadTexture_25` | Default fill |
-| Sand | `roadTexture_26` | Sand fill |
-
-Re-run the analyzer after adding or editing tiles in `roads/`.
+| Sand | `roadTexture_26` | Sand / beach |
 
 ## Project structure
 
 ```
-index.html          App shell and HUD controls
-css/style.css       HUD styling
+index.html              Environment editor (main app)
+index_old.html          Legacy procedural city generator
+css/
+  editor.css            Editor layout and styling
+  style.css             Legacy generator HUD styling
 js/
-  main.js           Three.js scene, UI wiring, generation trigger
-  city-gen.js       City layout: blocks, arterial grid, autotile, fill
-  tile-lookup.js    Bitmask autotile map and tile picking
-  terrain.js        Texture baking, heightmap noise, mesh builder
-  controls.js       Fly camera controls
-  wfc.js            Seeded RNG and WFC solver (legacy, unused by main app)
+  editor-main.js        Editor app bootstrap and UI wiring
+  editor/
+    grid-state.js       Grid data model, history, JSON export
+    grid-canvas.js      2D canvas renderer and interaction
+    viewport-3d.js      Three.js preview scene
+  terrain.js            Texture baking, heightmap noise, mesh builder
+  controls.js           Fly camera controls
+  main.js               Legacy generator entry point
+  city-gen.js           Legacy procedural layout
+  tile-lookup.js        Bitmask autotile map
+  wfc.js                WFC solver (legacy)
 scripts/
-  analyze-tiles.js  PNG edge analysis → road-tileset.json
-roads/              Source tile PNGs
-road-tileset.json   Generated tile metadata and socket data
+  analyze-tiles.js      PNG edge analysis → road-tileset.json
+roads/                  Source tile PNGs
+Skyboxes/               Skybox images
+road-tileset.json       Generated tile metadata and socket data
 ```
 
 ## Scripts
